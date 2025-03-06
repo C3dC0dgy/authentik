@@ -40,6 +40,7 @@ export function renderForm(provider?: Partial<SCIMProvider>, errors: ValidationE
                     .errorMessages=${errors?.url ?? []}
                     required
                     help=${msg("SCIM base url, usually ends in /v2.")}
+                    inputHint="code"
                 ></ak-text-input>
 
                 <ak-switch-input
@@ -58,7 +59,28 @@ export function renderForm(provider?: Partial<SCIMProvider>, errors: ValidationE
                     help=${msg(
                         "Token to authenticate with. Currently only bearer authentication is supported.",
                     )}
+                    inputHint="code"
                 ></ak-text-input>
+                <ak-form-element-horizontal name="dryRun">
+                    <label class="pf-c-switch">
+                        <input
+                            class="pf-c-switch__input"
+                            type="checkbox"
+                            ?checked=${first(provider?.dryRun, false)}
+                        />
+                        <span class="pf-c-switch__toggle">
+                            <span class="pf-c-switch__toggle-icon">
+                                <i class="fas fa-check" aria-hidden="true"></i>
+                            </span>
+                        </span>
+                        <span class="pf-c-switch__label">${msg("Enable dry-run mode")}</span>
+                    </label>
+                    <p class="pf-c-form__helper-text">
+                        ${msg(
+                            "When enabled, mutating requests will be dropped and logged instead.",
+                        )}
+                    </p>
+                </ak-form-element-horizontal>
             </div>
         </ak-form-group>
         <ak-form-group expanded>
