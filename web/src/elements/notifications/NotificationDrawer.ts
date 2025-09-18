@@ -1,18 +1,23 @@
-import { DEFAULT_CONFIG } from "@goauthentik/common/api/config";
-import { EVENT_NOTIFICATION_DRAWER_TOGGLE, EVENT_REFRESH } from "@goauthentik/common/constants";
-import { globalAK } from "@goauthentik/common/global";
-import { actionToLabel } from "@goauthentik/common/labels";
-import { MessageLevel } from "@goauthentik/common/messages";
-import { me } from "@goauthentik/common/users";
-import { getRelativeTime } from "@goauthentik/common/utils";
-import { AKElement } from "@goauthentik/elements/Base";
-import "@goauthentik/elements/EmptyState";
-import { showMessage } from "@goauthentik/elements/messages/MessageContainer";
-import { PaginatedResponse } from "@goauthentik/elements/table/Table";
+import "#elements/EmptyState";
 import "@patternfly/elements/pf-tooltip/pf-tooltip.js";
 
+import { DEFAULT_CONFIG } from "#common/api/config";
+import { EVENT_NOTIFICATION_DRAWER_TOGGLE, EVENT_REFRESH } from "#common/constants";
+import { globalAK } from "#common/global";
+import { actionToLabel } from "#common/labels";
+import { MessageLevel } from "#common/messages";
+import { formatElapsedTime } from "#common/temporal";
+import { me } from "#common/users";
+
+import { AKElement } from "#elements/Base";
+import { showMessage } from "#elements/messages/MessageContainer";
+import { PaginatedResponse } from "#elements/table/Table";
+import { SlottedTemplateResult } from "#elements/types";
+
+import { EventsApi, Notification } from "@goauthentik/api";
+
 import { msg, str } from "@lit/localize";
-import { CSSResult, TemplateResult, css, html } from "lit";
+import { css, CSSResult, html, nothing, TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
 import PFButton from "@patternfly/patternfly/components/Button/button.css";
@@ -20,8 +25,6 @@ import PFContent from "@patternfly/patternfly/components/Content/content.css";
 import PFDropdown from "@patternfly/patternfly/components/Dropdown/dropdown.css";
 import PFNotificationDrawer from "@patternfly/patternfly/components/NotificationDrawer/notification-drawer.css";
 import PFBase from "@patternfly/patternfly/patternfly-base.css";
-
-import { EventsApi, Notification } from "@goauthentik/api";
 
 @customElement("ak-notification-drawer")
 export class NotificationDrawer extends AKElement {
@@ -31,8 +34,13 @@ export class NotificationDrawer extends AKElement {
     @property({ type: Number })
     unread = 0;
 
-    static get styles(): CSSResult[] {
-        return [PFBase, PFButton, PFNotificationDrawer, PFContent, PFDropdown].concat(css`
+    static styles: CSSResult[] = [
+        PFBase,
+        PFButton,
+        PFNotificationDrawer,
+        PFContent,
+        PFDropdown,
+        css`
             .pf-c-drawer__body {
                 height: 100%;
             }
@@ -52,8 +60,8 @@ export class NotificationDrawer extends AKElement {
             .pf-c-notification-drawer__list-item-description {
                 white-space: pre-wrap;
             }
-        `);
-    }
+        `,
+    ];
 
     firstUpdated(): void {
         me().then((user) => {
@@ -102,7 +110,7 @@ export class NotificationDrawer extends AKElement {
                         href="${globalAK().api.base}if/admin/#/events/log/${item.event?.pk}"
                     >
                         <pf-tooltip position="top" content=${msg("Show details")}>
-                            <i class="fas fa-share-square"></i>
+                            <i class="fas fa-share-square" aria-hidden="true"></i>
                         </pf-tooltip>
                     </a>
                 `}
@@ -128,13 +136,13 @@ export class NotificationDrawer extends AKElement {
                             });
                     }}
                 >
-                    <i class="fas fa-times"></i>
+                    <i class="fas fa-times" aria-hidden="true"></i>
                 </button>
             </div>
             <p class="pf-c-notification-drawer__list-item-description">${item.body}</p>
             <small class="pf-c-notification-drawer__list-item-timestamp"
                 ><pf-tooltip position="top" .content=${item.created?.toLocaleString()}>
-                    ${getRelativeTime(item.created!)}
+                    ${formatElapsedTime(item.created!)}
                 </pf-tooltip></small
             >
         </li>`;
@@ -163,14 +171,15 @@ export class NotificationDrawer extends AKElement {
     }
 
     renderEmpty() {
-        return html`<ak-empty-state header=${msg("No notifications found.")}>
+        return html`<ak-empty-state
+            ><span>${msg("No notifications found.")}</span>
             <div slot="body">${msg("You don't have any notifications currently.")}</div>
         </ak-empty-state>`;
     }
 
-    render(): TemplateResult {
+    render(): SlottedTemplateResult {
         if (!this.notifications) {
-            return html``;
+            return nothing;
         }
         return html`<div class="pf-c-drawer__body pf-m-no-padding">
             <div class="pf-c-notification-drawer">
@@ -179,7 +188,7 @@ export class NotificationDrawer extends AKElement {
                         <h1 class="pf-c-notification-drawer__header-title">
                             ${msg("Notifications")}
                         </h1>
-                        <span> ${msg(str`${this.unread} unread`)} </span>
+                        <span> ${msg(str`${this.unread} unread`)}</span>
                     </div>
                     <div class="pf-c-notification-drawer__header-action">
                         <div>

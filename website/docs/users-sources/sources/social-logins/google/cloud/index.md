@@ -66,7 +66,7 @@ _I'm only going to list the mandatory/important fields to complete._
 
 ## authentik
 
-26. Under _Directory -> Federation & Social login_ Click **Create Google OAuth Source**
+26. Under **Directory > Federation & Social login** click **Create Google OAuth Source**
 
 27. **Name**: Choose a name (For the example I use Google)
 28. **Slug**: google (If you choose a different slug the URLs will need to be updated to reflect the change)
@@ -80,7 +80,7 @@ Here is an example of a complete authentik Google OAuth Source
 Save, and you now have Google as a source.
 
 :::note
-For more details on how to have the new source display on the Login Page see [here](../../../index.md#add-sources-to-default-login-page).
+For instructions on how to display the new source on the authentik login page, refer to the [Add sources to default login page documentation](../../../index.md#add-sources-to-default-login-page).
 :::
 
 ## Username mapping

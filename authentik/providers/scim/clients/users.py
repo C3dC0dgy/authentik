@@ -18,7 +18,7 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
     """SCIM client for users"""
 
     connection_type = SCIMProviderUser
-    connection_type_query = "user"
+    connection_attr = "scimprovideruser_set"
     mapper: PropertyMappingManager
 
     def __init__(self, provider: SCIMProvider):
@@ -31,15 +31,16 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
 
     def to_schema(self, obj: User, connection: SCIMProviderUser) -> SCIMUserSchema:
         """Convert authentik user into SCIM"""
-        raw_scim_user = super().to_schema(
-            obj,
-            connection,
-            schemas=(SCIM_USER_SCHEMA,),
-        )
+        raw_scim_user = super().to_schema(obj, connection)
         try:
             scim_user = SCIMUserSchema.model_validate(delete_none_values(raw_scim_user))
         except ValidationError as exc:
             raise StopSync(exc, obj) from exc
+        if SCIM_USER_SCHEMA not in scim_user.schemas:
+            scim_user.schemas.insert(0, SCIM_USER_SCHEMA)
+        # As this might be unset, we need to tell pydantic it's set so ensure the schemas
+        # are included, even if its just the defaults
+        scim_user.schemas = list(scim_user.schemas)
         if not scim_user.externalId:
             scim_user.externalId = str(obj.uid)
         return scim_user
@@ -71,27 +72,31 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
                 if not self._config.filter.supported:
                     raise exc
                 users = self._request(
-                    "GET", f"/Users?{urlencode({'filter': f'userName eq {scim_user.userName}'})}"
+                    "GET",
+                    f"/Users?{urlencode({'filter': f'userName eq \"{scim_user.userName}\"'})}",
                 )
                 users_res = users.get("Resources", [])
                 if len(users_res) < 1:
                     raise exc
                 return SCIMProviderUser.objects.create(
-                    provider=self.provider, user=user, scim_id=users_res[0]["id"]
+                    provider=self.provider,
+                    user=user,
+                    scim_id=users_res[0]["id"],
+                    attributes=users_res[0],
                 )
             else:
                 scim_id = response.get("id")
                 if not scim_id or scim_id == "":
                     raise StopSync("SCIM Response with missing or invalid `id`")
                 return SCIMProviderUser.objects.create(
-                    provider=self.provider, user=user, scim_id=scim_id
+                    provider=self.provider, user=user, scim_id=scim_id, attributes=response
                 )
 
     def update(self, user: User, connection: SCIMProviderUser):
         """Update existing user"""
         scim_user = self.to_schema(user, connection)
         scim_user.id = connection.scim_id
-        self._request(
+        response = self._request(
             "PUT",
             f"/Users/{connection.scim_id}",
             json=scim_user.model_dump(
@@ -99,3 +104,5 @@ class SCIMUserClient(SCIMClient[User, SCIMProviderUser, SCIMUserSchema]):
                 exclude_unset=True,
             ),
         )
+        connection.attributes = response
+        connection.save()

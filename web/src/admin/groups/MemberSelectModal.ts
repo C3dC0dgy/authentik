@@ -1,17 +1,19 @@
-import { DEFAULT_CONFIG } from "@goauthentik/common/api/config";
-import { getRelativeTime } from "@goauthentik/common/utils";
-import "@goauthentik/components/ak-status-label";
-import "@goauthentik/elements/buttons/SpinnerButton";
-import { PaginatedResponse } from "@goauthentik/elements/table/Table";
-import { TableColumn } from "@goauthentik/elements/table/Table";
-import { TableModal } from "@goauthentik/elements/table/TableModal";
+import "#components/ak-status-label";
+import "#elements/buttons/SpinnerButton/index";
+
+import { DEFAULT_CONFIG } from "#common/api/config";
+
+import { PaginatedResponse, TableColumn, Timestamp } from "#elements/table/Table";
+import { TableModal } from "#elements/table/TableModal";
+import { SlottedTemplateResult } from "#elements/types";
+
+import { CoreApi, CoreUsersListRequest, User } from "@goauthentik/api";
+
 import { match } from "ts-pattern";
 
 import { msg } from "@lit/localize";
-import { TemplateResult, css, html } from "lit";
+import { css, html, TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
-
-import { CoreApi, CoreUsersListRequest, User } from "@goauthentik/api";
 
 // Leaving room in the future for a multi-state control if someone somehow needs to filter inactive
 // users as well.
@@ -20,23 +22,19 @@ type UserListRequestFilter = Partial<Pick<CoreUsersListRequest, "isActive">>;
 
 @customElement("ak-group-member-select-table")
 export class MemberSelectTable extends TableModal<User> {
-    static get styles() {
-        return [
-            ...super.styles,
-            css`
-                .show-disabled-toggle-group {
-                    margin-inline-start: 0.5rem;
-                }
-            `,
-        ];
-    }
+    static styles = [
+        ...super.styles,
+        css`
+            .show-disabled-toggle-group {
+                margin-inline-start: 0.5rem;
+            }
+        `,
+    ];
 
     checkbox = true;
     checkboxChip = true;
 
-    searchEnabled(): boolean {
-        return true;
-    }
+    protected override searchEnabled = true;
 
     @property()
     confirm!: (selectedItems: User[]) => Promise<unknown>;
@@ -61,13 +59,15 @@ export class MemberSelectTable extends TableModal<User> {
         });
     }
 
-    columns(): TableColumn[] {
-        return [
-            new TableColumn(msg("Name"), "username"),
-            new TableColumn(msg("Active"), "is_active"),
-            new TableColumn(msg("Last login"), "last_login"),
-        ];
+    protected override rowLabel(item: User): string | null {
+        return item.username ?? item.name ?? null;
     }
+
+    protected columns: TableColumn[] = [
+        [msg("Name"), "username"],
+        [msg("Active"), "is_active"],
+        [msg("Last login"), "last_login"],
+    ];
 
     renderToolbarAfter() {
         const toggleShowDisabledUsers = () => {
@@ -99,15 +99,12 @@ export class MemberSelectTable extends TableModal<User> {
             </div>`;
     }
 
-    row(item: User): TemplateResult[] {
+    row(item: User): SlottedTemplateResult[] {
         return [
             html`<div>${item.username}</div>
                 <small>${item.name}</small>`,
             html` <ak-status-label type="warning" ?good=${item.isActive}></ak-status-label>`,
-            html`${item.lastLogin
-                ? html`<div>${getRelativeTime(item.lastLogin)}</div>
-                      <small>${item.lastLogin.toLocaleString()}</small>`
-                : msg("-")}`,
+            Timestamp(item.lastLogin),
         ];
     }
 

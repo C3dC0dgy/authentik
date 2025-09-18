@@ -39,7 +39,7 @@ sequenceDiagram
     user->>op: User authentication & authorization occurs
     op->>rp: Redirect back to the RP with an authorization code
 
-    rect rgb(255, 255, 191)
+    rect
 
         rp->>op: Exchange authorization code
         op->>rp: RP receives Access token (optionally Refresh Token)
@@ -58,13 +58,23 @@ sequenceDiagram
 | JWKS                 | `/application/o/<application slug>/jwks/`                            |
 | OpenID Configuration | `/application/o/<application slug>/.well-known/openid-configuration` |
 
+:::caution Reserved application slugs
+Due to how the OAuth2 provider endpoints are structured, you cannot create applications that use the slugs `authorize`, `token`, `userinfo`, or `revoke` as these would conflict with the global OAuth2 endpoints.
+:::
+
 ### Additional configuration options with Redirect URIs
 
 When using an OAuth 2.0 provider in authentik, the OP must validate the provided redirect URI by the RP. An authentik admin can configure a list in the **Redirect URI** field on the Provider.
 
 When you create a new OAuth 2.0 provider and app in authentik and you leave the **Redirect URI** field empty, then the first time a user opens that app, authentik uses that URL as the saved redirect URL.
 
-For advanced use cases, an authentik admin can use regular expressions (regex) instead of a redirect URL. For example, if you want to list 10 diff applications, instead of listing all ten you can create an expression with wildcards. Be aware, when using regex, that authetnik uses a dot as a separator in the URL, but in regex a dot means "one of any character", a wildcard. So you should escape the dot to prevent its interpration as a wildcard.
+For advanced use cases, an authentik admin can use regular expressions (regex) instead of a redirect URL. For example, if you want to list ten different applications, instead of listing them all individually, you can create an expression with wildcards. When using regex, be aware that authentik uses a dot as a separator in the URL, but in regex a dot means "one of any character", a wildcard. You should therefore escape the dot with `\.` to prevent its interpretation as a wildcard.
+
+### OAuth2/OpenID Connect back-channel logout
+
+Using back-channel logout (a server-to-server notification mechanism) allows an identity provider to notify connected OAuth2/OpenID clients whenever a user's session is terminated.
+
+For more information, see our [OAuth2/OpenID Connect back-channel logout](./backchannel-logout.mdx) documentation.
 
 ## OAuth 2.0 flows and grant types
 
@@ -138,6 +148,7 @@ By default, every user that has access to an application can request any of the 
 
 ```python
 # There are additional fields set in the context, use `ak_logger.debug(request.context)` to see them.
+
 if "my-admin-scope" in request.context["oauth_scopes"]:
     return ak_is_group_member(request.user, name="my-admin-group")
 return True

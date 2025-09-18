@@ -35,7 +35,7 @@ Here is an example of a completed OAuth2 screen for Discord.
 
 ## authentik
 
-8. Under _Directory -> Federation & Social login_ Click **Create Discord OAuth Source**
+8. Under **Directory > Federation & Social login** click **Create Discord OAuth Source**
 
 9. **Name:** Choose a name (For the example I used `Discord`)
 10. **Slug:** discord (You can choose a different slug, if you do you will need to update the Discord redirect URL and point it to the correct slug.)
@@ -380,3 +380,7 @@ return True
 ```
 
 Now bind this policy to the chosen enrollment and authentication flows for the Discord OAuth source.
+
+:::note
+For instructions on how to display the new source on the authentik login page, refer to the [Add sources to default login page documentation](../../index.md#add-sources-to-default-login-page).
+:::

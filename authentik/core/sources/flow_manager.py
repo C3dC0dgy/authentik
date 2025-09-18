@@ -48,6 +48,7 @@ LOGGER = get_logger()
 
 PLAN_CONTEXT_SOURCE_GROUPS = "source_groups"
 SESSION_KEY_SOURCE_FLOW_STAGES = "authentik/flows/source_flow_stages"
+SESSION_KEY_SOURCE_FLOW_CONTEXT = "authentik/flows/source_flow_context"
 SESSION_KEY_OVERRIDE_FLOW_TOKEN = "authentik/flows/source_override_flow_token"  # nosec
 
 
@@ -78,8 +79,8 @@ class SourceFlowManager:
 
     identifier: str
 
-    user_connection_type: type[UserSourceConnection] = UserSourceConnection
-    group_connection_type: type[GroupSourceConnection] = GroupSourceConnection
+    user_connection_type: type[UserSourceConnection]
+    group_connection_type: type[GroupSourceConnection]
 
     user_info: dict[str, Any]
     policy_context: dict[str, Any]
@@ -261,6 +262,7 @@ class SourceFlowManager:
                 plan.append_stage(stage)
         for stage in self.request.session.get(SESSION_KEY_SOURCE_FLOW_STAGES, []):
             plan.append_stage(stage)
+        plan.context.update(self.request.session.get(SESSION_KEY_SOURCE_FLOW_CONTEXT, {}))
         return plan.to_redirect(self.request, flow)
 
     def handle_auth(

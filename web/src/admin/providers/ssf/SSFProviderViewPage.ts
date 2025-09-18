@@ -1,19 +1,29 @@
-import "@goauthentik/admin/providers/RelatedApplicationButton";
-import "@goauthentik/admin/providers/ssf/SSFProviderFormPage";
-import "@goauthentik/admin/providers/ssf/StreamTable";
-import { DEFAULT_CONFIG } from "@goauthentik/common/api/config";
-import { EVENT_REFRESH } from "@goauthentik/common/constants";
-import "@goauthentik/components/events/ObjectChangelog";
-import { AKElement } from "@goauthentik/elements/Base";
-import "@goauthentik/elements/CodeMirror";
-import "@goauthentik/elements/EmptyState";
-import "@goauthentik/elements/Markdown";
-import "@goauthentik/elements/Tabs";
-import "@goauthentik/elements/buttons/ModalButton";
-import "@goauthentik/elements/buttons/SpinnerButton";
+import "#admin/providers/RelatedApplicationButton";
+import "#admin/providers/ssf/SSFProviderFormPage";
+import "#admin/providers/ssf/StreamTable";
+import "#components/events/ObjectChangelog";
+import "#elements/CodeMirror";
+import "#elements/EmptyState";
+import "#elements/Tabs";
+import "#elements/buttons/ModalButton";
+import "#elements/buttons/SpinnerButton/index";
+import "#elements/tasks/TaskList";
+
+import { DEFAULT_CONFIG } from "#common/api/config";
+import { EVENT_REFRESH } from "#common/constants";
+
+import { AKElement } from "#elements/Base";
+import { SlottedTemplateResult } from "#elements/types";
+
+import {
+    ModelEnum,
+    ProvidersApi,
+    RbacPermissionsAssignedByUsersListModelEnum,
+    SSFProvider,
+} from "@goauthentik/api";
 
 import { msg } from "@lit/localize";
-import { CSSResult, TemplateResult, html } from "lit";
+import { CSSResult, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
 import PFBanner from "@patternfly/patternfly/components/Banner/banner.css";
@@ -27,12 +37,6 @@ import PFFormControl from "@patternfly/patternfly/components/FormControl/form-co
 import PFPage from "@patternfly/patternfly/components/Page/page.css";
 import PFGrid from "@patternfly/patternfly/layouts/Grid/grid.css";
 import PFBase from "@patternfly/patternfly/patternfly-base.css";
-
-import {
-    ProvidersApi,
-    RbacPermissionsAssignedByUsersListModelEnum,
-    SSFProvider,
-} from "@goauthentik/api";
 
 @customElement("ak-provider-ssf-view")
 export class SSFProviderViewPage extends AKElement {
@@ -50,21 +54,19 @@ export class SSFProviderViewPage extends AKElement {
     @property({ attribute: false })
     provider?: SSFProvider;
 
-    static get styles(): CSSResult[] {
-        return [
-            PFBase,
-            PFButton,
-            PFPage,
-            PFGrid,
-            PFContent,
-            PFCard,
-            PFDescriptionList,
-            PFForm,
-            PFFormControl,
-            PFBanner,
-            PFDivider,
-        ];
-    }
+    static styles: CSSResult[] = [
+        PFBase,
+        PFButton,
+        PFPage,
+        PFGrid,
+        PFContent,
+        PFCard,
+        PFDescriptionList,
+        PFForm,
+        PFFormControl,
+        PFBanner,
+        PFDivider,
+    ];
 
     constructor() {
         super();
@@ -74,42 +76,57 @@ export class SSFProviderViewPage extends AKElement {
         });
     }
 
-    render(): TemplateResult {
+    render(): SlottedTemplateResult {
         if (!this.provider) {
-            return html``;
+            return nothing;
         }
-        return html` <ak-tabs>
-            <section slot="page-overview" data-tab-title="${msg("Overview")}">
-                ${this.renderTabOverview()}
-            </section>
-            <section
-                slot="page-changelog"
-                data-tab-title="${msg("Changelog")}"
-                class="pf-c-page__main-section pf-m-no-padding-mobile"
-            >
-                <div class="pf-c-card">
-                    <div class="pf-c-card__body">
-                        <ak-object-changelog
-                            targetModelPk=${this.provider?.pk || ""}
-                            targetModelName=${this.provider?.metaModelName || ""}
-                        >
-                        </ak-object-changelog>
+        return html` <main>
+            <ak-tabs>
+                <div
+                    role="tabpanel"
+                    tabindex="0"
+                    slot="page-overview"
+                    id="page-overview"
+                    aria-label="${msg("Overview")}"
+                >
+                    ${this.renderTabOverview()}
+                </div>
+                <div
+                    role="tabpanel"
+                    tabindex="0"
+                    slot="page-changelog"
+                    id="page-changelog"
+                    aria-label="${msg("Changelog")}"
+                    class="pf-c-page__main-section pf-m-no-padding-mobile"
+                >
+                    <div class="pf-c-card">
+                        <div class="pf-c-card__body">
+                            <ak-object-changelog
+                                targetModelPk=${this.provider?.pk || ""}
+                                targetModelName=${this.provider?.metaModelName || ""}
+                            >
+                            </ak-object-changelog>
+                        </div>
                     </div>
                 </div>
-            </section>
-            <ak-rbac-object-permission-page
-                slot="page-permissions"
-                data-tab-title="${msg("Permissions")}"
-                model=${RbacPermissionsAssignedByUsersListModelEnum.AuthentikProvidersSsfSsfprovider}
-                objectPk=${this.provider.pk}
-            ></ak-rbac-object-permission-page>
-        </ak-tabs>`;
+                <ak-rbac-object-permission-page
+                    role="tabpanel"
+                    tabindex="0"
+                    slot="page-permissions"
+                    id="page-permissions"
+                    aria-label="${msg("Permissions")}"
+                    model=${RbacPermissionsAssignedByUsersListModelEnum.AuthentikProvidersSsfSsfprovider}
+                    objectPk=${this.provider.pk}
+                ></ak-rbac-object-permission-page>
+            </ak-tabs>
+        </main>`;
     }
 
-    renderTabOverview(): TemplateResult {
+    renderTabOverview(): SlottedTemplateResult {
         if (!this.provider) {
-            return html``;
+            return nothing;
         }
+        const [appLabel, modelName] = ModelEnum.AuthentikProvidersSsfSsfprovider.split(".");
         return html`<div slot="header" class="pf-c-banner pf-m-info">
                 ${msg("SSF Provider is in preview.")}
                 <a href="mailto:hello+feature/ssf@goauthentik.io">${msg("Send us feedback!")}</a>
@@ -137,10 +154,13 @@ export class SSFProviderViewPage extends AKElement {
                                 <dd class="pf-c-description-list__description">
                                     <div class="pf-c-description-list__text">
                                         <input
-                                            class="pf-c-form-control"
+                                            class="pf-c-form-control pf-m-monospace"
                                             readonly
                                             type="text"
                                             value=${this.provider.ssfUrl || ""}
+                                            placeholder=${this.provider.ssfUrl
+                                                ? msg("SSF URL")
+                                                : msg("No assigned application")}
                                         />
                                     </div>
                                 </dd>
@@ -149,8 +169,8 @@ export class SSFProviderViewPage extends AKElement {
                     </div>
                     <div class="pf-c-card__footer">
                         <ak-forms-modal>
-                            <span slot="submit"> ${msg("Update")} </span>
-                            <span slot="header"> ${msg("Update SSF Provider")} </span>
+                            <span slot="submit">${msg("Update")}</span>
+                            <span slot="header">${msg("Update SSF Provider")}</span>
                             <ak-provider-ssf-form slot="form" .instancePk=${this.provider.pk || 0}>
                             </ak-provider-ssf-form>
                             <button slot="trigger" class="pf-c-button pf-m-primary">
@@ -163,6 +183,14 @@ export class SSFProviderViewPage extends AKElement {
                     <div class="pf-c-card__title">${msg("Streams")}</div>
                     <ak-provider-ssf-stream-list .providerId=${this.providerID}>
                     </ak-provider-ssf-stream-list>
+                </div>
+                <div class="pf-c-card pf-l-grid__item pf-m-12-col-on-2xl">
+                    <div class="pf-c-card__title">${msg("Tasks")}</div>
+                    <ak-task-list
+                        .relObjAppLabel=${appLabel}
+                        .relObjModel=${modelName}
+                        .relObjId="${this.provider.pk}"
+                    ></ak-task-list>
                 </div>
             </div>`;
     }

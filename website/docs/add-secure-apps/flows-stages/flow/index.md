@@ -41,12 +41,12 @@ Starting with authentik 2022.8, flows will be exported as YAML, but JSON-based f
 To create a flow, follow these steps:
 
 1. Log in as an admin to authentik, and go to the Admin interface.
-2. In the Admin interface, navigate to **Flows and Stages -> Flows**.
+2. In the Admin interface, navigate to **Flows and Stages > Flows**.
 3. Click **Create**, define the flow using the [configuration settings](#flow-configuration-options) described below, and then click **Finish**.
 
 After creating the flow, you can then [bind specific stages](../stages/index.md#bind-a-stage-to-a-flow) to the flow and [bind policies](../../../customize/policies/working_with_policies.md) to the flow to further customize the user's log in and authentication process.
 
-To determine which flow should be used, authentik will first check which default authentication flow is configured in the active [**Brand**](../../../customize/brands.md). If no default is configured there, the policies in all flows with the matching designation are checked, and the first flow with matching policies sorted by `slug` will be used.
+To determine which flow should be used, authentik will first check which default authentication flow is configured in the active [**Brand**](../../../sys-mgmt/brands.md). If no default is configured there, the policies in all flows with the matching designation are checked, and the first flow with matching policies sorted by `slug` will be used.
 
 ## Flow configuration options
 
@@ -77,7 +77,6 @@ import Defaultflowlist from "../flow/flow_list/\_defaultflowlist.mdx";
     When the compatibility mode is enabled, authentik uses a polyfill which emulates the Shadow DOM APIs without actually using the feature, and instead a traditional DOM is rendered. This increases support for password managers, especially on mobile devices.
 
 - **Denied action**: Configure what happens when access to a flow is denied by a policy. By default, authentik will redirect to a `?next` parameter if set, and otherwise show an error message.
-
     - `MESSAGE_CONTINUE`: Show a message if no `?next` parameter is set, otherwise redirect.
     - `MESSAGE`: Always show error message.
     - `CONTINUE`: Always redirect, either to `?next` if set, otherwise to the default interface.
@@ -88,4 +87,4 @@ import Defaultflowlist from "../flow/flow_list/\_defaultflowlist.mdx";
 
 - **Layout**: select how the UI displays the flow when it is executed; with stacked elements, content left or right, and sidebar left or right.
 
-- **Background**: optionally, select a background image for the UI presentation of the flow.
+- **Background**: optionally, select a background image for the UI presentation of the flow. This overrides any default background image configured in the [Branding settings](../../../sys-mgmt/brands.md#branding-settings).
